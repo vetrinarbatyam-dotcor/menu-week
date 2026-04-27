@@ -97,6 +97,7 @@ class MenuRequest(BaseModel):
     style_hint: str | None = None
     surprise: bool = False
     favorites_only: bool = False
+    max_prep_minutes: int = 30  # תקרת זמן לערב (30/45/60/90)
 
 
 class SaveMenuRequest(BaseModel):
@@ -155,7 +156,7 @@ def extract_json(text: str) -> Any:
 
 
 # ── menu generation ──
-def build_menu_prompt(recipes: list[dict], style_hint: str | None) -> str:
+def build_menu_prompt(recipes: list[dict], style_hint: str | None, max_prep_minutes: int = 30) -> str:
     catalog = [{
         "id": r["id"], "name": r["name"], "cuisine": r["cuisine"],
         "meal_type": r["meal_type"], "prep_minutes": r["prep_minutes"],
@@ -168,7 +169,7 @@ def build_menu_prompt(recipes: list[dict], style_hint: str | None) -> str:
 ## פרופיל המשפחה
 - 2 מבוגרים + 4 ילדים (גילים 11, 15, 17, 19)
 - צהריים בבית: 11, 15, 17 (ה-19 לא חוזר לצהריים)
-- זמן בישול ערב: 30 דקות מקסימום (יוצא דופן: שישי/שבת אפשר יותר)
+- זמן בישול ערב מקסימלי השבוע: {max_prep_minutes} דקות (לשישי/שבת/אירוח אפשר לחרוג קצת)
 - העדפה: חלבון גבוה + דל פחמימות, אבל גמיש
 - סגנונות: ישראלי, איטלקי, אסיאתי, מזרח-תיכוני, מקסיקני, בריא
 - **לא אמריקאי** (חוץ מפנקייקס בסופ״ש)
@@ -329,7 +330,7 @@ def generate_menu(req: MenuRequest):
         else:
             log.warning("favorites_only requested but only %d favorites — using full pool", len(favs))
 
-    prompt = build_menu_prompt(pool, style)
+    prompt = build_menu_prompt(pool, style, req.max_prep_minutes)
     raw_out = call_claude(prompt, timeout=180)
     used_fallback = False
     if raw_out:
