@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>שבוע טעים · תפריט שבועי משפחתי</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Heebo', 'system-ui', 'sans-serif'] },
+          colors: {
+            cream: '#FBF6EC',
+            warm: { 50:'#FBF6EC',100:'#F4EAD5',200:'#E8D4AB',300:'#D9B97A',400:'#C9985A',500:'#B47840',600:'#9A5E30',700:'#7A4623',800:'#5C341A',900:'#3D2817' },
+            terracotta: { 400:'#D88766',500:'#C97B5C',600:'#A85F44',700:'#824A35' },
+            olive: { 400:'#A4B287',500:'#8B9D77',600:'#6E8059' },
+          },
+          boxShadow: {
+            'warm': '0 4px 20px -2px rgba(184, 120, 64, 0.15)',
+            'warm-lg': '0 10px 40px -5px rgba(184, 120, 64, 0.20)',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { background: linear-gradient(135deg, #FBF6EC 0%, #F4EAD5 100%); min-height: 100vh; font-family: 'Heebo', sans-serif; }
+    .meal-card { transition: all 0.2s ease; }
+    .meal-card:hover { transform: translateY(-2px); }
+    .day-shabbat { background: linear-gradient(135deg, #FBF6EC 0%, #F4EAD5 100%); border: 2px solid #C97B5C; }
+    .day-friday  { background: linear-gradient(135deg, #F4EAD5 0%, #E8D4AB 100%); border: 2px solid #B47840; }
+    .pulse-warm  { animation: pulse-warm 2s infinite; }
+    @keyframes pulse-warm { 0%,100% { box-shadow: 0 0 0 0 rgba(184,120,64,.4); } 50% { box-shadow: 0 0 0 10px rgba(184,120,64,0); } }
+    .loading-bowl { animation: bowl-spin 1.5s ease-in-out infinite; font-size: 4rem; display: inline-block; }
+    @keyframes bowl-spin { 0%{transform:rotate(0deg) scale(1)} 50%{transform:rotate(180deg) scale(1.2)} 100%{transform:rotate(360deg) scale(1)} }
+    .cuisine-badge { font-size: .65rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+    .cuisine-israeli { background:#E8D4AB; color:#5C341A; }
+    .cuisine-italian { background:#F4D4D4; color:#7A1F1F; }
+    .cuisine-asian { background:#D4E8D4; color:#1F5C1F; }
+    .cuisine-middle_eastern { background:#F4E4C4; color:#6B4520; }
+    .cuisine-mexican { background:#F4C4A4; color:#8B3A1A; }
+    .cuisine-healthy { background:#C4E8C4; color:#2F6B2F; }
+    .cuisine-american { background:#C4D4F4; color:#1F3A6B; }
+    .cuisine-other { background:#E0E0E0; color:#444; }
+    details > summary { cursor: pointer; list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    .checkbox-warm:checked { background-color: #B47840; border-color: #B47840; }
+    .star { font-size: 1.25rem; transition: transform .15s; }
+    .star:hover { transform: scale(1.2); }
+    .star.active { color: #C97B5C; }
+    .star.inactive { color: #D9B97A; opacity: .35; }
+    .tab-btn { padding: 8px 14px; border-radius: 12px 12px 0 0; font-weight: 600; transition: all .15s; }
+    .tab-btn.active { background: white; color: #5C341A; box-shadow: 0 -4px 12px -4px rgba(184,120,64,.15); }
+    .tab-btn:not(.active) { color: #7A4623; opacity: .7; }
+    .tab-btn:not(.active):hover { opacity: 1; }
+    input.field, select.field, textarea.field { width: 100%; padding: 8px 12px; border: 2px solid #E8D4AB; border-radius: 8px; font-size: .9rem; background: white; }
+    input.field:focus, select.field:focus, textarea.field:focus { outline: none; border-color: #B47840; }
+  </style>
+</head>
+<body class="text-warm-900">
+
+  <header class="bg-warm-900 text-cream py-6 shadow-warm-lg">
+    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-4xl">🍲</span>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-extrabold">שבוע טעים</h1>
+          <p class="text-warm-200 text-sm">תפריט שבועי למשפחה · משפחת קרן</p>
+        </div>
+      </div>
+      <div class="text-warm-300 text-xs hidden md:block" id="date-display"></div>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="max-w-7xl mx-auto px-4 pt-4">
+    <div class="flex gap-1">
+      <button onclick="switchTab('plan')"   id="tab-plan"   class="tab-btn active">📅 תכנון השבוע</button>
+      <button onclick="switchTab('saved')"  id="tab-saved"  class="tab-btn">💾 תפריטים שמורים</button>
+      <button onclick="switchTab('recipes')" id="tab-recipes" class="tab-btn">📖 כל המתכונים</button>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 pb-8">
+
+    <!-- ════════ TAB: PLAN ════════ -->
+    <div id="view-plan" class="tab-view">
+      <!-- Action Bar -->
+      <div class="bg-white rounded-3xl shadow-warm p-6 mb-6 rounded-tr-none">
+        <div class="flex flex-col gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-warm-900 mb-1">בואו נתכנן את השבוע 🌿</h2>
+            <p class="text-warm-700 text-sm">לחיצה אחת — תפריט מלא + רשימת קניות</p>
+          </div>
+          <div class="flex flex-col md:flex-row gap-2">
+            <input id="style-input" type="text"
+              placeholder="דגש מיוחד (לא חובה)... למשל: השבוע פחות בשר, או הרבה אסיאתי"
+              class="flex-1 min-w-[280px] px-4 py-3 rounded-xl border-2 border-warm-200 focus:border-warm-500 focus:outline-none text-warm-900 placeholder:text-warm-400"
+            />
+            <label class="flex items-center gap-2 px-3 bg-warm-50 rounded-xl cursor-pointer">
+              <input type="checkbox" id="favs-only" class="checkbox-warm w-4 h-4 rounded">
+              <span class="text-sm text-warm-800">⭐ רק מועדפים</span>
+            </label>
+            <button onclick="generateMenu(false)" class="bg-warm-700 hover:bg-warm-800 text-cream font-bold py-3 px-6 rounded-xl shadow-warm transition pulse-warm">
+              🍽️ צור תפריט
+            </button>
+            <button onclick="generateMenu(true)" class="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold py-3 px-6 rounded-xl shadow-warm transition" title="AI יבחר משהו לא צפוי">
+              ✨ הפתע אותי
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="loading" class="hidden text-center py-16">
+        <span class="loading-bowl">🥘</span>
+        <p class="mt-4 text-warm-700 font-medium text-lg">בוחר/ת את הארוחות הכי מתאימות לכם...</p>
+        <p class="text-warm-500 text-sm mt-2">לוקח 30-60 שניות (Claude חושב)</p>
+      </div>
+
+      <div id="empty-state" class="text-center py-16">
+        <div class="text-7xl mb-4">🍳</div>
+        <p class="text-warm-700 text-xl font-medium">אין עדיין תפריט השבוע</p>
+        <p class="text-warm-500 mt-2">לחצו על "צור תפריט" כדי להתחיל</p>
+      </div>
+
+      <section id="menu-section" class="hidden">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <h2 class="text-2xl font-bold text-warm-900" id="menu-title">השבוע על השולחן</h2>
+          <div class="flex gap-2 items-center flex-wrap">
+            <span id="ai-badge" class="text-xs"></span>
+            <button onclick="openSaveDialog()" class="text-sm bg-olive-500 hover:bg-olive-600 text-white font-bold px-3 py-2 rounded-lg shadow-warm">💾 שמור תפריט</button>
+            <button onclick="window.print()" class="text-sm bg-warm-100 hover:bg-warm-200 text-warm-900 px-3 py-2 rounded-lg">🖨️ הדפסה</button>
+          </div>
+        </div>
+        <div id="week-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3"></div>
+      </section>
+
+      <section id="shopping-section" class="hidden mt-10">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-2xl font-bold text-warm-900">🛒 רשימת הקניות</h2>
+          <div class="text-sm text-warm-600"><span id="shopping-progress">0 / 0</span> סומנו</div>
+        </div>
+        <div class="bg-white rounded-3xl shadow-warm p-6">
+          <div id="shopping-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ════════ TAB: SAVED ════════ -->
+    <div id="view-saved" class="tab-view hidden">
+      <div class="bg-white rounded-3xl shadow-warm p-6 mb-6 rounded-tr-none">
+        <h2 class="text-xl font-bold text-warm-900 mb-2">💾 תפריטים שמורים</h2>
+        <p class="text-warm-700 text-sm">לחץ על תפריט כדי לטעון אותו, או על 🗑 למחיקה.</p>
+      </div>
+      <div id="saved-list" class="space-y-3"></div>
+    </div>
+
+    <!-- ════════ TAB: RECIPES ════════ -->
+    <div id="view-recipes" class="tab-view hidden">
+      <div class="bg-white rounded-3xl shadow-warm p-6 mb-6 rounded-tr-none">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-warm-900">📖 כל המתכונים</h2>
+            <p class="text-warm-700 text-sm">סמן מועדפים, הוסף מתכון משלך, או לחץ לצפייה.</p>
+          </div>
+          <div class="flex gap-2">
+            <select id="filter-cuisine" class="field max-w-[180px]" onchange="renderRecipes()">
+              <option value="">כל הסגנונות</option>
+              <option value="israeli">ישראלי</option>
+              <option value="italian">איטלקי</option>
+              <option value="asian">אסיאתי</option>
+              <option value="middle_eastern">מזרח-תיכוני</option>
+              <option value="mexican">מקסיקני</option>
+              <option value="healthy">בריא</option>
+              <option value="american">אמריקאי</option>
+              <option value="other">אחר</option>
+            </select>
+            <label class="flex items-center gap-2 px-3 bg-warm-50 rounded-lg cursor-pointer">
+              <input type="checkbox" id="filter-favs" class="checkbox-warm w-4 h-4 rounded" onchange="renderRecipes()">
+              <span class="text-sm text-warm-800">⭐</span>
+            </label>
+            <button onclick="openCustomRecipeForm()" class="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-4 py-2 rounded-lg shadow-warm">➕ הוסף מתכון</button>
+          </div>
+        </div>
+      </div>
+      <div id="recipes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+
+  </main>
+
+  <footer class="text-center text-warm-500 text-xs py-6">
+    <p>שבוע טעים · POC v0.2 · בנוי בהמון אהבה ☕</p>
+  </footer>
+
+  <script>
+    // ── i18n ──
+    const CUISINE_HE = { israeli:'ישראלי', italian:'איטלקי', asian:'אסיאתי', middle_eastern:'מזרח-תיכוני', mexican:'מקסיקני', healthy:'בריא', american:'אמריקאי', other:'אחר' };
+    const MEAL_ICONS = { breakfast:'☕', lunch:'🥗', dinner:'🍽️' };
+    const MEAL_LABELS = { breakfast:'בוקר', lunch:'צהריים', dinner:'ערב' };
+
+    // ── state ──
+    let currentMenu = null;
+    let allRecipes = [];
+
+    document.getElementById('date-display').textContent =
+      new Date().toLocaleDateString('he-IL', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+    // ── tabs ──
+    function switchTab(name) {
+      ['plan','saved','recipes'].forEach(t => {
+        document.getElementById('view-' + t).classList.toggle('hidden', t !== name);
+        document.getElementById('tab-' + t).classList.toggle('active', t === name);
+      });
+      if (name === 'saved') loadSavedMenus();
+      if (name === 'recipes') loadAllRecipes();
+    }
+
+    // ── menu generation ──
+    async function generateMenu(surprise) {
+      const styleHint = document.getElementById('style-input').value.trim();
+      const favsOnly = document.getElementById('favs-only').checked;
+      hide('empty-state', 'menu-section', 'shopping-section');
+      show('loading');
+      try {
+        const res = await fetch('/api/menu/generate', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ style_hint: styleHint || null, surprise, favorites_only: favsOnly }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'failed');
+        currentMenu = json.data;
+        renderMenu(json.data, 'השבוע על השולחן');
+      } catch (e) {
+        alert('שגיאה: ' + e.message);
+      } finally {
+        hide('loading');
+      }
+    }
+
+    function renderMenu(data, title) {
+      document.getElementById('menu-title').textContent = title || 'תפריט שבועי';
+      const grid = document.getElementById('week-grid');
+      grid.innerHTML = '';
+      data.week.forEach(day => {
+        const isFriday = day.day === 'שישי';
+        const isShabbat = day.day === 'שבת';
+        const dayClass = isShabbat ? 'day-shabbat' : isFriday ? 'day-friday' : 'bg-white';
+        const accent = isShabbat ? '🕯️' : isFriday ? '🍷' : '';
+        const card = document.createElement('div');
+        card.className = `${dayClass} rounded-2xl p-4 shadow-warm`;
+        card.innerHTML = `
+          <h3 class="font-bold text-warm-900 text-lg mb-3 text-center border-b-2 border-warm-200 pb-2">
+            ${day.day} ${accent}
+          </h3>
+          <div class="space-y-3">
+            ${['breakfast','lunch','dinner'].map(meal => {
+              const m = day.meals[meal];
+              if (!m) return `<div class="text-warm-400 text-sm">${MEAL_ICONS[meal]} ${MEAL_LABELS[meal]}: —</div>`;
+              return `
+                <div class="meal-card bg-warm-50 rounded-xl p-3 border border-warm-100 cursor-pointer" onclick="showRecipe('${m.id}')">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-semibold text-warm-600">${MEAL_ICONS[meal]} ${MEAL_LABELS[meal]}</span>
+                    <span class="cuisine-badge cuisine-${m.cuisine}">${CUISINE_HE[m.cuisine] || m.cuisine}</span>
+                  </div>
+                  <div class="font-bold text-warm-900 text-sm leading-tight mb-1">
+                    ${m.is_favorite ? '⭐ ' : ''}${m.name}
+                  </div>
+                  <div class="text-xs text-warm-600 flex items-center gap-2">
+                    <span>⏱️ ${m.prep_minutes} דק׳</span>
+                    ${m.protein_level === 'high' ? '<span>💪 חלבון</span>' : ''}
+                    ${m.carb_level === 'low' ? '<span>🥬 דל פחמ׳</span>' : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      renderShopping(data.shopping_list);
+      const badge = document.getElementById('ai-badge');
+      badge.textContent = data.ai_used ? '🤖 נבחר ע״י Claude' : '🎲 בחירה אקראית (Claude לא זמין)';
+      badge.className = data.ai_used ? 'text-xs bg-olive-500 text-white px-2 py-1 rounded-full' : 'text-xs bg-warm-300 text-warm-900 px-2 py-1 rounded-full';
+      show('menu-section','shopping-section');
+    }
+
+    function renderShopping(categories) {
+      const grid = document.getElementById('shopping-grid');
+      grid.innerHTML = '';
+      let total = 0;
+      categories.forEach(cat => {
+        const block = document.createElement('div');
+        block.className = 'border-2 border-warm-100 rounded-2xl p-4';
+        block.innerHTML = `
+          <h4 class="font-bold text-warm-800 mb-3 pb-2 border-b border-warm-200">📦 ${cat.category}</h4>
+          <ul class="space-y-2">
+            ${cat.items.map((item, i) => {
+              total++;
+              const id = `chk-${cat.category}-${i}`.replace(/\s/g,'-');
+              return `
+                <li class="flex items-start gap-2">
+                  <input type="checkbox" id="${id}" class="checkbox-warm mt-1 w-4 h-4 rounded border-warm-300 cursor-pointer" onchange="updateProgress()">
+                  <label for="${id}" class="flex-1 text-sm text-warm-800 cursor-pointer">
+                    <span class="font-medium">${item.item}</span>
+                    <span class="text-warm-500 mr-1">— ${formatQty(item.qty)} ${item.unit}</span>
+                  </label>
+                </li>`;
+            }).join('')}
+          </ul>`;
+        grid.appendChild(block);
+      });
+      document.getElementById('shopping-progress').textContent = `0 / ${total}`;
+      window._shoppingTotal = total;
+    }
+
+    function formatQty(q) { return Number.isInteger(q) ? q : q.toFixed(1).replace(/\.0$/, ''); }
+    function updateProgress() {
+      const checked = document.querySelectorAll('#shopping-grid input:checked').length;
+      document.getElementById('shopping-progress').textContent = `${checked} / ${window._shoppingTotal}`;
+    }
+
+    // ── save menu ──
+    function openSaveDialog() {
+      if (!currentMenu) { alert('צריך קודם ליצור תפריט'); return; }
+      const defaultName = `שבוע ${new Date().toLocaleDateString('he-IL')}`;
+      const name = prompt('שם לתפריט:', defaultName);
+      if (!name) return;
+      saveMenu(name);
+    }
+
+    async function saveMenu(name) {
+      try {
+        const res = await fetch('/api/menus', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ name, week_data: currentMenu }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+        toast(`💾 התפריט "${name}" נשמר`);
+      } catch (e) {
+        alert('שגיאה בשמירה: ' + e.message);
+      }
+    }
+
+    async function loadSavedMenus() {
+      const list = document.getElementById('saved-list');
+      list.innerHTML = '<p class="text-warm-500 text-center py-8">טוען...</p>';
+      try {
+        const res = await fetch('/api/menus');
+        const json = await res.json();
+        if (!json.ok) throw new Error();
+        if (json.data.length === 0) {
+          list.innerHTML = '<div class="text-center py-12"><div class="text-6xl mb-3">📭</div><p class="text-warm-700">עדיין לא שמרת תפריטים</p><p class="text-warm-500 text-sm mt-2">צור תפריט בלשונית "תכנון השבוע" ולחץ על 💾</p></div>';
+          return;
+        }
+        list.innerHTML = '';
+        json.data.forEach(m => {
+          const date = new Date(m.created_at).toLocaleString('he-IL');
+          const card = document.createElement('div');
+          card.className = 'bg-white rounded-2xl shadow-warm p-4 flex items-center justify-between gap-3';
+          card.innerHTML = `
+            <div class="flex-1 cursor-pointer" onclick="loadSavedMenu(${m.id})">
+              <div class="font-bold text-warm-900">${m.name}</div>
+              <div class="text-xs text-warm-500 mt-1">📅 נשמר ${date} ${m.ai_used ? '· 🤖 AI' : '· 🎲 אקראי'}</div>
+            </div>
+            <button onclick="loadSavedMenu(${m.id})" class="bg-warm-700 hover:bg-warm-800 text-cream px-3 py-2 rounded-lg text-sm font-bold">פתח</button>
+            <button onclick="deleteSavedMenu(${m.id}, '${m.name.replace(/'/g, '\\\'')}')" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">🗑</button>
+          `;
+          list.appendChild(card);
+        });
+      } catch (e) {
+        list.innerHTML = '<p class="text-red-600 text-center py-8">שגיאה בטעינה</p>';
+      }
+    }
+
+    async function loadSavedMenu(id) {
+      try {
+        const res = await fetch(`/api/menus/${id}`);
+        const json = await res.json();
+        if (!json.ok) throw new Error();
+        currentMenu = { week: json.data.week, shopping_list: json.data.shopping_list, ai_used: json.data.ai_used };
+        renderMenu(currentMenu, json.data.name);
+        switchTab('plan');
+      } catch (e) {
+        alert('שגיאה בטעינה');
+      }
+    }
+
+    async function deleteSavedMenu(id, name) {
+      if (!confirm(`למחוק את "${name}"?`)) return;
+      try {
+        await fetch(`/api/menus/${id}`, { method:'DELETE' });
+        toast(`🗑 "${name}" נמחק`);
+        loadSavedMenus();
+      } catch (e) {
+        alert('שגיאה');
+      }
+    }
+
+    // ── recipes view ──
+    async function loadAllRecipes() {
+      try {
+        const res = await fetch('/api/recipes');
+        const json = await res.json();
+        allRecipes = json.data;
+        renderRecipes();
+      } catch (e) {}
+    }
+
+    function renderRecipes() {
+      const cuisine = document.getElementById('filter-cuisine').value;
+      const onlyFavs = document.getElementById('filter-favs').checked;
+      let recs = allRecipes;
+      if (cuisine) recs = recs.filter(r => r.cuisine === cuisine);
+      if (onlyFavs) recs = recs.filter(r => r.is_favorite);
+      const grid = document.getElementById('recipes-grid');
+      if (recs.length === 0) {
+        grid.innerHTML = '<p class="text-warm-500 col-span-full text-center py-12">אין מתכונים מתאימים</p>';
+        return;
+      }
+      grid.innerHTML = '';
+      recs.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl shadow-warm p-4 cursor-pointer hover:shadow-warm-lg transition';
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h3 class="font-bold text-warm-900 flex-1" onclick="showRecipe('${r.id}')">${r.name}</h3>
+            <button onclick="event.stopPropagation(); toggleFavorite('${r.id}')" class="star ${r.is_favorite ? 'active' : 'inactive'}" title="הוסף למועדפים">⭐</button>
+          </div>
+          <div class="flex gap-2 mb-2 flex-wrap" onclick="showRecipe('${r.id}')">
+            <span class="cuisine-badge cuisine-${r.cuisine}">${CUISINE_HE[r.cuisine] || r.cuisine}</span>
+            <span class="text-xs bg-warm-100 px-2 py-1 rounded-full">${MEAL_ICONS[r.meal_type]} ${MEAL_LABELS[r.meal_type] || r.meal_type}</span>
+            <span class="text-xs bg-warm-100 px-2 py-1 rounded-full">⏱️ ${r.prep_minutes} דק׳</span>
+            ${r.is_custom ? '<span class="text-xs bg-terracotta-500 text-white px-2 py-1 rounded-full">שלי</span>' : ''}
+          </div>
+          <div class="text-xs text-warm-600 flex gap-2 flex-wrap">
+            ${r.protein_level === 'high' ? '<span>💪 חלבון</span>' : ''}
+            ${r.carb_level === 'low' ? '<span>🥬 דל פחמ׳</span>' : ''}
+            ${(r.tags || []).slice(0,2).map(t => `<span class="text-warm-500">#${t}</span>`).join(' ')}
+          </div>
+          ${r.is_custom ? `<button onclick="event.stopPropagation(); deleteCustomRecipe('${r.id}')" class="text-xs text-red-600 mt-2 hover:underline">מחק מתכון</button>` : ''}
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    async function toggleFavorite(id) {
+      try {
+        const res = await fetch(`/api/recipes/${id}/favorite`, { method:'POST' });
+        const json = await res.json();
+        if (!json.ok) throw new Error();
+        const r = allRecipes.find(x => x.id === id);
+        if (r) r.is_favorite = json.is_favorite;
+        renderRecipes();
+        toast(json.is_favorite ? '⭐ נוסף למועדפים' : 'הוסר מהמועדפים');
+      } catch (e) { alert('שגיאה'); }
+    }
+
+    async function deleteCustomRecipe(id) {
+      if (!confirm('למחוק את המתכון?')) return;
+      try {
+        await fetch(`/api/recipes/${id}`, { method:'DELETE' });
+        toast('🗑 המתכון נמחק');
+        loadAllRecipes();
+      } catch (e) { alert('שגיאה'); }
+    }
+
+    // ── recipe modal (used in plan view too) ──
+    async function showRecipe(id) {
+      try {
+        const res = await fetch(`/api/recipes/${id}`);
+        const json = await res.json();
+        if (!json.ok) return;
+        const r = json.data;
+        const html = `
+          <div onclick="event.stopPropagation()" class="bg-white rounded-3xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-warm-lg">
+            <div class="flex items-start justify-between mb-4 gap-3">
+              <div class="flex-1">
+                <h3 class="text-2xl font-bold text-warm-900 flex items-center gap-2">
+                  <button onclick="toggleFavoriteInModal('${r.id}')" class="star ${r.is_favorite ? 'active' : 'inactive'}">⭐</button>
+                  ${r.name}
+                </h3>
+                <div class="flex gap-2 mt-2 flex-wrap">
+                  <span class="cuisine-badge cuisine-${r.cuisine}">${CUISINE_HE[r.cuisine] || r.cuisine}</span>
+                  <span class="text-xs bg-warm-100 px-2 py-1 rounded-full">⏱️ ${r.prep_minutes} דק׳</span>
+                  ${(r.tags||[]).map(t => `<span class="text-xs bg-olive-400 text-white px-2 py-1 rounded-full">${t}</span>`).join('')}
+                </div>
+              </div>
+              <button onclick="closeModal()" class="text-warm-500 hover:text-warm-900 text-2xl leading-none">×</button>
+            </div>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 class="font-bold text-warm-800 mb-2">🥕 מצרכים</h4>
+                <ul class="space-y-1 text-sm">
+                  ${r.ingredients.map(ing => `
+                    <li class="flex justify-between border-b border-warm-100 py-1">
+                      <span>${ing.item}</span>
+                      <span class="text-warm-600">${formatQty(ing.qty)} ${ing.unit}</span>
+                    </li>`).join('')}
+                </ul>
+              </div>
+              <div>
+                <h4 class="font-bold text-warm-800 mb-2">👨‍🍳 הכנה</h4>
+                <ol class="space-y-2 text-sm list-decimal list-inside">
+                  ${r.steps.map(s => `<li>${s}</li>`).join('')}
+                </ol>
+              </div>
+            </div>
+          </div>`;
+        const modal = document.createElement('div');
+        modal.id = 'recipe-modal';
+        modal.className = 'fixed inset-0 bg-warm-900/60 flex items-center justify-center p-4 z-50';
+        modal.onclick = closeModal;
+        modal.innerHTML = html;
+        document.body.appendChild(modal);
+      } catch (e) {}
+    }
+
+    async function toggleFavoriteInModal(id) {
+      await toggleFavorite(id);
+      closeModal();
+      showRecipe(id);
+    }
+
+    function closeModal() {
+      const m = document.getElementById('recipe-modal'); if (m) m.remove();
+      const f = document.getElementById('custom-form-modal'); if (f) f.remove();
+    }
+
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    // ── custom recipe form ──
+    function openCustomRecipeForm() {
+      const html = `
+        <div onclick="event.stopPropagation()" class="bg-white rounded-3xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-warm-lg">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-2xl font-bold text-warm-900">➕ הוספת מתכון חדש</h3>
+            <button onclick="closeModal()" class="text-warm-500 hover:text-warm-900 text-2xl leading-none">×</button>
+          </div>
+          <form id="custom-form" onsubmit="submitCustomRecipe(event)" class="space-y-3">
+            <div class="grid md:grid-cols-2 gap-3">
+              <div><label class="text-sm text-warm-700">שם המתכון</label><input name="name" required class="field"></div>
+              <div><label class="text-sm text-warm-700">סגנון</label><select name="cuisine" required class="field">
+                <option value="israeli">ישראלי</option><option value="italian">איטלקי</option>
+                <option value="asian">אסיאתי</option><option value="middle_eastern">מזרח-תיכוני</option>
+                <option value="mexican">מקסיקני</option><option value="healthy">בריא</option>
+                <option value="american">אמריקאי</option><option value="other">אחר</option>
+              </select></div>
+              <div><label class="text-sm text-warm-700">סוג ארוחה</label><select name="meal_type" required class="field">
+                <option value="breakfast">בוקר</option><option value="lunch">צהריים</option><option value="dinner">ערב</option>
+              </select></div>
+              <div><label class="text-sm text-warm-700">זמן הכנה (דקות)</label><input name="prep_minutes" type="number" min="5" max="240" value="30" required class="field"></div>
+              <div><label class="text-sm text-warm-700">חלבון</label><select name="protein_level" class="field">
+                <option value="low">נמוך</option><option value="medium" selected>בינוני</option><option value="high">גבוה</option>
+              </select></div>
+              <div><label class="text-sm text-warm-700">פחמימות</label><select name="carb_level" class="field">
+                <option value="low">נמוך</option><option value="medium" selected>בינוני</option><option value="high">גבוה</option>
+              </select></div>
+            </div>
+            <div><label class="text-sm text-warm-700">תגיות (מופרדות בפסיק) — למשל: בריא, מהיר, ילדים</label>
+              <input name="tags" class="field" placeholder="ביתי, חלבון גבוה"></div>
+            <div>
+              <label class="text-sm text-warm-700">מצרכים — שורה אחת לכל מצרך, פורמט: <code class="bg-warm-50 px-1">פריט | כמות | יחידה | קטגוריה</code></label>
+              <textarea name="ingredients" rows="6" class="field font-mono text-sm" placeholder="עגבנייה | 3 | יח׳ | ירקות&#10;שמן זית | 2 | כפות | שמנים"></textarea>
+            </div>
+            <div>
+              <label class="text-sm text-warm-700">צעדי הכנה — שורה לכל צעד</label>
+              <textarea name="steps" rows="6" class="field" placeholder="לקצוץ עגבניות&#10;לטגן בצל&#10;לבשל 20 דק׳"></textarea>
+            </div>
+            <div class="flex gap-2 justify-end pt-2">
+              <button type="button" onclick="closeModal()" class="bg-warm-100 hover:bg-warm-200 text-warm-900 px-4 py-2 rounded-lg">ביטול</button>
+              <button type="submit" class="bg-warm-700 hover:bg-warm-800 text-cream font-bold px-6 py-2 rounded-lg">שמור מתכון</button>
+            </div>
+          </form>
+        </div>`;
+      const modal = document.createElement('div');
+      modal.id = 'custom-form-modal';
+      modal.className = 'fixed inset-0 bg-warm-900/60 flex items-center justify-center p-4 z-50';
+      modal.onclick = closeModal;
+      modal.innerHTML = html;
+      document.body.appendChild(modal);
+    }
+
+    async function submitCustomRecipe(e) {
+      e.preventDefault();
+      const f = e.target;
+      const ingredients = f.ingredients.value.trim().split('\n').filter(Boolean).map(line => {
+        const [item, qty, unit, category] = line.split('|').map(s => s.trim());
+        return { item, qty: parseFloat(qty) || 1, unit: unit || 'יח׳', category: category || 'אחר' };
+      });
+      const steps = f.steps.value.trim().split('\n').filter(Boolean);
+      const tags = f.tags.value.trim().split(',').map(s => s.trim()).filter(Boolean);
+      const body = {
+        name: f.name.value.trim(),
+        cuisine: f.cuisine.value,
+        meal_type: f.meal_type.value,
+        prep_minutes: parseInt(f.prep_minutes.value),
+        protein_level: f.protein_level.value,
+        carb_level: f.carb_level.value,
+        tags, ingredients, steps,
+      };
+      try {
+        const res = await fetch('/api/recipes', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const json = await res.json();
+        if (!json.ok) throw new Error();
+        closeModal();
+        toast('✅ המתכון נוסף!');
+        loadAllRecipes();
+      } catch (e) {
+        alert('שגיאה בהוספה');
+      }
+    }
+
+    // ── helpers ──
+    function show(...ids) { ids.forEach(id => document.getElementById(id).classList.remove('hidden')); }
+    function hide(...ids) { ids.forEach(id => document.getElementById(id).classList.add('hidden')); }
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.className = 'fixed bottom-6 right-6 bg-warm-900 text-cream px-5 py-3 rounded-xl shadow-warm-lg z-50 font-medium';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2500);
+    }
+  </script>
+</body>
+</html>
